@@ -1,0 +1,4 @@
+*
+!.gitignore
+!outbound_connection_count.sh
+!snat_monitoring.sh
