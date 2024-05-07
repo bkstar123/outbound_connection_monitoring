@@ -5,10 +5,9 @@
 # This script focuses on readability, correct data presentation, and IPv6 support.
  
 # Check if netstat is installed
-if ! command -v netstat &> /dev/null; then
-    echo "Info: netstat is not installed. Installing net-tools."
-    apt-get update && apt-get install -y net-tools
-fi
+# author: Ander Wahlqvist
+# Modified by Tuan Hoang
+#
 echo "Polling current connections, specifically excluding incoming connections on ports 80, 443, and 2222..."
 echo "--------------------------------------------------------------------------------"
 printf "%-45s %-8s %s\n" "Remote Address:Port" "Total" "States (Count)"
@@ -49,9 +48,9 @@ netstat -natp | awk '/ESTABLISHED|TIME_WAIT|CLOSE_WAIT|FIN_WAIT/ {
      }
      if (max_connection_count>ENVIRON["threshold"]) {
           if (getline < "dump_taken.lock" < 0) {
+              system("touch dump_taken.lock && echo 1 >> dump_taken.lock")
               print "Taking memory dump..."
               system("nohup /tools/dotnet-dump collect -p $(/tools/dotnet-dump ps | grep /usr/share/dotnet/dotnet | grep -v grep | tr -s \" \" | cut -d\" \" -f2) &")
-              system("touch dump_taken.lock && echo 1 >> dump_taken.lock")
           }
      }
  }' | sort -k2,2nr
