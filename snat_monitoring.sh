@@ -68,7 +68,7 @@ while true; do
     
     # Your command to output to the file (example: echo "Some output" >> "$output_file")
   echo "Poll complete. Waiting for 10 seconds..."
-    ./outbound_connection_count.sh $threshold >> "$output_file"
+    ./outbound_connection_count.sh $threshold $instance >> "$output_file"
 
     # Wait for 10 seconds before the next run
     sleep 10
