@@ -12,8 +12,8 @@ echo "Polling current connections, specifically excluding incoming connections o
 echo "--------------------------------------------------------------------------------"
 printf "%-45s %-8s %s\n" "Remote Address:Port" "Total" "States (Count)"
 echo "--------------------------------------------------------------------------------"
-export threshold=$1
-export instance=$2
+threshold=$1
+instance=$2
 # Collect connections, focusing on correctly excluding specified incoming ports, and aggregate by remote host and state
 netstat -natp | awk '/ESTABLISHED|TIME_WAIT|CLOSE_WAIT|FIN_WAIT/ {
     split($4, laddr, ":"); # Local address and port
