@@ -22,6 +22,13 @@ function getcomputername()
     instance=${instance#*=}
     echo "$instance"
 }
+function getsasurl()
+{
+    # $1-pid
+    sas_url=$(cat "/proc/$1/environ" | tr '\0' '\n' | grep -w DIAGNOSTICS_AZUREBLOBCONTAINERSASURL)
+    sas_url=${sas_url#*=}
+    echo "$sas_url"
+}
 while getopts ":t:f:h" opt; do
     case $opt in
         t) 
@@ -75,6 +82,8 @@ output_dir="outconn-logs-${instance}"
 # Create output directory if it doesn't exist
 mkdir -p "$output_dir"
 
+sas_url=$(getsasurl "$pid")
+
 while true; do
     # Check if it's a new hour
     current_hour=$(date +"%Y-%m-%d_%H")
@@ -83,7 +92,7 @@ while true; do
         output_file="$output_dir/outbound_conns_stats_${current_hour}.log"
         previous_hour="$current_hour"
     fi
-    ./outbound_connection_count.sh "$threshold" "$instance" "$pid" >> "$output_file"
+    ./outbound_connection_count.sh "$threshold" "$instance" "$pid" "$sas_url" >> "$output_file"
 
     # Wait for 10 seconds before the next run
     sleep $frequency
