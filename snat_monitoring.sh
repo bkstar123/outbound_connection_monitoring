@@ -6,8 +6,7 @@
 script_name=${0##*/}
 function usage()
 {
-    echo "###Syntax: $script_name -t <threshold> -i <instance name>"
-    echo "- You must specify instance name so that logs are written to separated folders for each instance"
+    echo "###Syntax: $script_name -t <threshold>"
     echo "- Without specifying -f <interval>, the script will execute every 10s"
     echo "- Without specifying -t <threshold>, the default will be 100"
     echo "###Threshold: when an instance has the number of outbound connections toward any destination reaches that threshold, the script will automatically take memory dump for that instance"
@@ -16,13 +15,17 @@ function die()
 {
     echo "$1" && exit $2
 }
-while getopts ":t:i:f:h" opt; do
+function getcomputername()
+{
+    # $1-pid
+    instance=$(cat "/proc/$1/environ" | tr '\0' '\n' | grep -w COMPUTERNAME)
+    instance=${instance#*=}
+    echo "$instance"
+}
+while getopts ":t:f:h" opt; do
     case $opt in
         t) 
            threshold=$OPTARG
-           ;;
-        i) 
-           instance=$OPTARG
            ;;
         f)
            frequency=$OPTARG
@@ -37,10 +40,6 @@ while getopts ":t:i:f:h" opt; do
     esac
 done
 shift $(( OPTIND - 1 ))
-
-if [[ -z "$instance" ]]; then
-    die "###Critical: You must specify instance name using the option -i, e.g: -i <instance name>" >&2 1
-fi
 
 if [[ -z "$threshold" ]]; then
     echo "###Info: without specifying option -t <threshold>, the script will set the default outbound connection count to 100 before triggering memory dump taking"
@@ -58,6 +57,18 @@ if ! command -v netstat &> /dev/null; then
     apt-get update && apt-get install -y net-tools
 fi
 
+# Find the PID of the .NET application
+pid=$(/tools/dotnet-dump ps | grep /usr/share/dotnet/dotnet | grep -v grep | tr -s " " | cut -d" " -f2)
+if [ -z "$pid" ]; then
+    die "There is no .NET process running" 1
+fi
+
+# Get the computer name from /proc/PID/environ, where PID is .net core process's pid
+instance=$(getcomputername "$pid")
+if [[ -z "$instance" ]]; then
+    die "Cannot find the environment variable of COMPUTERNAME" >&2 1
+fi
+
 # Output dir is named after instance name
 output_dir="outconn-logs-${instance}" 
 
@@ -72,9 +83,6 @@ while true; do
         output_file="$output_dir/outbound_conns_stats_${current_hour}.log"
         previous_hour="$current_hour"
     fi
-    
-    # Your command to output to the file (example: echo "Some output" >> "$output_file")
-  echo "Poll complete. Waiting for $frequency seconds..."
     ./outbound_connection_count.sh $threshold $instance >> "$output_file"
 
     # Wait for 10 seconds before the next run
