@@ -83,7 +83,7 @@ while true; do
         output_file="$output_dir/outbound_conns_stats_${current_hour}.log"
         previous_hour="$current_hour"
     fi
-    ./outbound_connection_count.sh $threshold $instance >> "$output_file"
+    ./outbound_connection_count.sh "$threshold" "$instance" "$pid" >> "$output_file"
 
     # Wait for 10 seconds before the next run
     sleep $frequency
