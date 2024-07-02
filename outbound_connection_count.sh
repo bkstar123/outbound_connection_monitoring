@@ -16,7 +16,7 @@ export threshold=$1
 export instance=$2
 export pid=$3
 export sas_url=$4
-export dump_file="dump_${instance}.dmp"
+export dump_file="dump_${instance}_$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16).dmp"
 # Collect connections, focusing on correctly excluding specified incoming ports, and aggregate by remote host and state
 netstat -natp | awk '/ESTABLISHED|TIME_WAIT|CLOSE_WAIT|FIN_WAIT/ {
     split($4, laddr, ":"); # Local address and port
